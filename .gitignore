@@ -19,4 +19,4 @@ env/
 Thumbs.db
 
 # Ignore all datasets
-datasets/
+01_datasets/
