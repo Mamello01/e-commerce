@@ -2,21 +2,21 @@
 
 ## 1. Project Definition
 
-### **Project Name**
+### **Project Name:**
 
-**Olist E-Commerce Business Intelligence & Data Quality Analytics**
+#### Olist E-Commerce Business Intelligence & Data Quality Analytics
 
-### **Dataset**
+### **Dataset:**
 
-**Olist Brazilian E-Commerce Public Dataset**
+#### Olist Brazilian E-Commerce Public Dataset
 
-### **Business Context**
+### **Business Context:**
 
 Olist is an e-commerce marketplace connecting customers with sellers. The dataset contains transactional, customer, product, seller, payment, review, and geographic information that can be used to evaluate business performance and customer experience.
 
-### **Primary Stakeholder**
+### **Primary Stakeholder:**
 
-**E-Commerce Management**
+#### E-Commerce Management
 
 The analysis is designed to provide management with visibility into:
 
@@ -33,7 +33,7 @@ The analysis is designed to provide management with visibility into:
 
 ---
 
-# 2. Analytical Scope
+## 2. Analytical Scope
 
 We're going to build **five analytical projects**:
 
@@ -47,7 +47,7 @@ And the **Data Quality Monitoring** component will sit across the entire project
 
 ---
 
-# Project 1 — Sales & Revenue Performance
+## Project 1 — Sales & Revenue Performance
 
 ## **Business Objective**
 
@@ -55,7 +55,7 @@ Evaluate overall sales performance and identify revenue, order-volume, and purch
 
 ## **Key Business Questions**
 
-### Revenue & Sales
+## Revenue & Sales
 
 * What is the total revenue generated?
 * How does revenue change over time?
@@ -93,13 +93,13 @@ Evaluate overall sales performance and identify revenue, order-volume, and purch
 
 ---
 
-# Project 2 — Customer Analytics
+## **Project 2 — Customer Analytics**
 
-## **Business Objective**
+### Business Objective
 
 Understand customer behaviour, geographic distribution, purchasing activity, and customer value.
 
-## **Key Business Questions**
+### Key Business Questions
 
 ### Customer Behaviour
 
@@ -123,7 +123,7 @@ Understand customer behaviour, geographic distribution, purchasing activity, and
 * What characteristics distinguish high-value customers?
 * Are high-value customers concentrated in particular regions?
 
-## **Key KPIs**
+## Key KPIs
 
 | KPI                             | Purpose                              |
 | ------------------------------- | ------------------------------------ |
@@ -142,13 +142,13 @@ We'll define metrics based on the **observed dataset period**, rather than prete
 
 ---
 
-# Project 3 — Product & Category Performance
+## Project 3 — Product & Category Performance
 
-## **Business Objective**
+### Business Objective
 
 Identify the products and categories driving sales and evaluate their relationship with revenue, pricing, and customer satisfaction.
 
-## **Key Business Questions**
+### Key Business Questions
 
 ### Sales Performance
 
@@ -172,7 +172,7 @@ Identify the products and categories driving sales and evaluate their relationsh
 * Are high-selling categories also highly rated?
 * Are expensive products associated with better or worse reviews?
 
-## **Key KPIs**
+## Key KPIs
 
 | KPI                       | Purpose                       |
 | ------------------------- | ----------------------------- |
@@ -185,13 +185,13 @@ Identify the products and categories driving sales and evaluate their relationsh
 
 ---
 
-# Project 4 — Seller Performance
+## Project 4 — Seller Performance
 
-## **Business Objective**
+### Business Objective
 
 Evaluate seller sales performance and identify relationships between seller activity, delivery performance, and customer satisfaction.
 
-## **Key Business Questions**
+### Key Business Questions
 
 ### Sales
 
@@ -200,7 +200,7 @@ Evaluate seller sales performance and identify relationships between seller acti
 * Which sellers sell the most products?
 * Which sellers have the highest average order value?
 
-### Customer Experience
+### Customer Experience — Seller Performance
 
 * Which sellers receive the highest review scores?
 * Which sellers receive the lowest review scores?
@@ -216,8 +216,7 @@ This is where things get more interesting:
 * Which sellers have high sales but poor reviews?
 * Which sellers have strong reviews but relatively low sales?
 
-## **Key KPIs**
-
+## Key KPIs 
 | KPI                             | Purpose                       |
 | ------------------------------- | ----------------------------- |
 | **Seller Revenue**              | Measure seller contribution   |
@@ -229,13 +228,13 @@ This is where things get more interesting:
 
 ---
 
-# Project 5 — Logistics & Customer Experience
+## Project 5 — Logistics & Customer Experience
 
-## **Business Objective**
+## Business Objective
 
 Evaluate delivery performance and determine whether logistics outcomes are associated with customer satisfaction.
 
-## **Key Business Questions**
+## Key Business Questions
 
 ### Delivery Performance
 
@@ -265,7 +264,7 @@ We can investigate:
 * Is there a relationship between delivery delay and review score?
 * Which combinations of seller and geography create poor customer experiences?
 
-## **Key KPIs**
+## Key KPIs
 
 | KPI                                 | Purpose                                                  |
 | ----------------------------------- | -------------------------------------------------------- |
@@ -277,7 +276,7 @@ We can investigate:
 
 ---
 
-# 6. Cross-Project Analytical Questions
+## 6. Cross-Project Analytical Questions
 
 We're going to connect the analytical areas.
 
@@ -309,10 +308,9 @@ We're going to connect the analytical areas.
 
 > Are certain regions consistently associated with longer delivery times?
 
-
 ---
 
-# 7. Data Quality Requirements
+## 7. Data Quality Requirements
 
 The analytical layer should support monitoring of things like:
 
@@ -352,4 +350,3 @@ The analytical layer should support monitoring of things like:
 * Order items without corresponding products
 * Order items without corresponding sellers
 * Reviews without corresponding orders
-
