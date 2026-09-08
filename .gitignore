@@ -20,3 +20,6 @@ Thumbs.db
 
 # Ignore all datasets
 01_datasets/
+
+# DBeaver workspace
+workspace/ 
