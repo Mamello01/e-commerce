@@ -151,3 +151,68 @@ The grain of `staging.geolocation` is established at the level of an individual 
 The relationship between ZIP-code prefix and geographic observations is therefore one-to-many. This is an important consideration for subsequent relationship validation and analytical modelling because joining customer or seller records to `geolocation` using only the ZIP-code prefix could produce multiple matching geolocation records and result in row multiplication.
 
 The geolocation table should therefore not be treated as a one-row-per-ZIP-code lookup without an appropriate modelling or transformation strategy.
+
+## Order Items
+
+The `order_items` dataset contains the individual order-item records associated with orders in the Olist e-commerce system. The main identifiers are `order_id`, `order_item_id`, `product_id`, and `seller_id`. Grain validation focuses on determining whether each row represents an individual item within an order and whether `order_id` and `order_item_id` together uniquely identify that record.
+
+### 1. Establish table and identifier counts for order items
+
+The first step is to establish the total number of records and the number of distinct values for the main identifiers.
+
+| Metric | Result |
+| --- | ---: |
+| Total rows | 112,650 |
+| Distinct `order_id` | 98,666 |
+| Distinct `order_item_id` | 21 |
+| Distinct `product_id` | 32,951 |
+| Distinct `seller_id` | 3,095 |
+
+The table contains 112,650 order-item records and 98,666 distinct orders. The difference between these counts indicates that individual orders can contain multiple order-item records.
+
+Only 21 distinct `order_item_id` values are present, indicating that `order_item_id` does not function as a globally unique identifier. The product and seller identifiers also occur across multiple order-item records, reflecting their participation in the wider order-item structure.
+
+### 2. Validate `order_id` repetition
+
+The next step is to examine how many order-item records are associated with each `order_id`.
+
+The results show that individual orders can contain multiple order-item records. The highest observed order contains 21 order-item records, with other orders containing 20, 15, 14, 13, and fewer records.
+
+This confirms that `order_id` does not uniquely identify rows in `staging.order_items`. Its role is to identify the order to which one or more order-item records belong.
+
+### 3. Validate `order_item_id` uniqueness
+
+The uniqueness check shows that `order_item_id` is repeated across the table. The identifier ranges across 21 distinct values, with `order_item_id` 1 occurring 98,666 times, followed by lower frequencies for subsequent item positions.
+
+This indicates that `order_item_id` is not globally unique. Its meaning is contextual to the associated `order_id`, representing the position of an item within an order rather than uniquely identifying an order-item record across the entire table.
+
+### 4. Validate the composite `order_id` and `order_item_id` grain
+
+The combination of `order_id` and `order_item_id` is tested to determine whether the same combination occurs more than once.
+
+The result returns no repeated combinations.
+
+This confirms that the combination of `order_id` and `order_item_id` uniquely identifies the records within `staging.order_items`. While neither identifier is unique independently, their combination provides a unique identifier for the row-level grain.
+
+### 5. Establish product and seller participation
+
+The order-item table contains 32,951 distinct products and 3,095 distinct sellers across the 112,650 order-item records.
+
+| Metric | Result |
+| --- | ---: |
+| Distinct orders | 98,666 |
+| Distinct products | 32,951 |
+| Distinct sellers | 3,095 |
+| Total order-item records | 112,650 |
+
+These results establish the population of orders, products, and sellers represented within the order-item grain. The detailed cardinality of the relationships between these entities is reserved for the subsequent relationship-validation stage.
+
+## Overall Finding - Order Items
+
+The grain of `staging.order_items` is established at the level of an individual order item within an order. Each row represents one order-item record rather than one complete order.
+
+`order_id` is not unique because an order can contain multiple order-item records. `order_item_id` is also not globally unique and is meaningful within the context of an order. The combination of `order_id` and `order_item_id` is unique across the staging table and therefore provides the row-level identifier for the order-item grain.
+
+The table contains 112,650 order-item records associated with 98,666 distinct orders, 32,951 distinct products, and 3,095 distinct sellers. The detailed relationships between order items, products, sellers, and orders will be validated separately during relationship validation.
+
+The confirmed order-item grain provides the basis for treating `order_items` as an item-level transactional component of the analytical model and for ensuring that measures based on order-item records are not incorrectly interpreted as order-level measures.

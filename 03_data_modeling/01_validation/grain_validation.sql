@@ -108,3 +108,52 @@ FROM (
 GROUP BY geographic_observations
 ORDER BY zip_code_prefix_count DESC;
 
+
+-- ORDER ITEM GRAIN VALIDATION
+
+-- 1. Establish table and identifier counts for the order_items table --
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT order_id) AS distinct_order_ids,
+    COUNT(DISTINCT order_item_id) AS distinct_order_item_ids,
+    COUNT(DISTINCT product_id) AS distinct_product_ids,
+    COUNT(DISTINCT seller_id) AS distinct_seller_ids
+FROM staging.items;
+
+-- 2. Check the uniqueness of order_id
+SELECT
+    order_id,
+    COUNT(*) AS order_id_count
+FROM staging.items
+GROUP BY order_id
+HAVING COUNT(*) > 1
+ORDER BY order_id_count DESC;
+
+-- 3. Check the uniqueness of order_item_id
+SELECT
+    order_item_id,
+    COUNT(*) AS order_item_id_count
+FROM staging.items
+GROUP BY order_item_id
+HAVING COUNT(*) > 1
+ORDER BY order_item_id_count DESC;
+
+-- 4. Test the composite order_id and order_item_id key 
+SELECT
+    order_id,
+    order_item_id,
+    COUNT(*) AS composite_key_count
+FROM staging.items
+GROUP BY 
+    order_id, 
+    order_item_id
+HAVING COUNT(*) > 1
+ORDER BY composite_key_count DESC;
+
+-- 5. Examine product and seller cardinality at the order-item level
+SELECT
+    COUNT(DISTINCT order_id) AS distinct_orders,
+    COUNT(DISTINCT product_id) AS distinct_products,
+    COUNT(DISTINCT seller_id) AS distinct_sellers,
+    COUNT(*) AS total_order_items
+FROM staging.items;
