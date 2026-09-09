@@ -260,3 +260,60 @@ GROUP BY order_status
 ORDER BY number_of_orders DESC;
 
  
+ -- ORDER REVIEW GRAIN VALIDATION
+
+ -- 1. Establish table and identifier counts for the order_reviews table --
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT review_id) AS distinct_review_ids,
+    COUNT(DISTINCT order_id) AS distinct_order_ids,
+    COUNT(DISTINCT review_score) AS distinct_review_scores 
+FROM staging.reviews;
+
+-- 2. Check the uniqueness of review_id in the order_reviews table
+SELECT
+    review_id,
+    COUNT(*) AS review_id_occurrences
+FROM staging.reviews
+GROUP BY review_id
+HAVING COUNT(*) > 1
+ORDER BY review_id_occurrences DESC;
+
+-- 3. Check the uniqueness of order_id in the order_reviews table
+SELECT
+    order_id,
+    COUNT(*) AS order_id_occurrences
+FROM staging.reviews
+GROUP BY order_id
+HAVING COUNT(*) > 1
+ORDER BY order_id_occurrences DESC;
+
+-- 4. Examine the cardinality of review_id to order_id
+SELECT
+    review_id,
+    COUNT(DISTINCT order_id) AS distinct_order_ids
+FROM staging.reviews
+GROUP BY review_id
+HAVING COUNT(DISTINCT order_id) > 1
+ORDER BY distinct_order_ids DESC;
+
+-- 5. Examine the cardinality of order_id to review_id
+SELECT
+    order_id,
+    COUNT(DISTINCT review_id) AS distinct_review_ids
+FROM staging.reviews
+GROUP BY order_id
+HAVING COUNT(DISTINCT review_id) > 1
+ORDER BY distinct_review_ids DESC;
+
+-- 6. Test the composite review_id and order_id key
+SELECT
+    review_id,
+    order_id,
+    COUNT(*) AS composite_key_count
+FROM staging.reviews
+GROUP BY 
+    review_id, 
+    order_id
+HAVING COUNT(*) > 1
+ORDER BY composite_key_count DESC;

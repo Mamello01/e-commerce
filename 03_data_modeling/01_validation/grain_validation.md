@@ -352,7 +352,7 @@ The order-status distribution identifies eight distinct statuses within the orde
 
 The status distribution confirms that `order_status` functions as an attribute of the order-level record. The distribution itself does not establish whether the statuses are consistent with the associated order timestamps; such chronological and business-rule checks are reserved for later validation.
 
-## Overall Finding
+## Overall Finding - Orders
 
 The grain of `staging.orders` is established at the level of one order per row.
 
@@ -361,3 +361,76 @@ The grain of `staging.orders` is established at the level of one order per row.
 The table contains eight distinct order statuses, with `delivered` representing the largest observed category at 96,478 orders.
 
 The validated order-level grain provides an important reference point for the other transactional datasets. `order_items` and `order_payments` operate at finer grains and can contain multiple records associated with a single order. This distinction must be considered during subsequent relationship validation and analytical modelling to prevent incorrect joins and potential measure duplication.
+
+## Order Reviews
+
+The `order_reviews` dataset contains review records associated with orders in the Olist e-commerce system. The primary identifiers examined are `review_id` and `order_id`, while `review_score` represents an attribute of the review record. Grain validation focuses on determining what one row represents, whether either identifier is unique independently, and whether the combination of `review_id` and `order_id` uniquely identifies a record.
+
+### 1. Establish table and identifier counts for order reviews
+
+The first step is to establish the total number of records and the distinct counts for the main review identifiers and attributes.
+
+| Metric | Result |
+| --- | ---: |
+| Total rows | 99,224 |
+| Distinct `review_id` | 98,410 |
+| Distinct `order_id` | 98,673 |
+| Distinct `review_score` | 5 |
+
+The table contains 99,224 review records, with 98,410 distinct `review_id` values and 98,673 distinct `order_id` values. The difference between the total number of rows and the distinct identifier counts indicates that both identifiers are repeated within the table.
+
+There are five distinct `review_score` values, confirming that review scores function as attributes of the review records rather than as row-level identifiers.
+
+### 2. Validate `review_id` uniqueness
+
+The uniqueness check identifies repeated `review_id` values. Some `review_id` values occur three times within the table.
+
+This confirms that `review_id` does not uniquely identify a row in `staging.order_reviews`.
+
+The repeated values indicate that `review_id` must be interpreted together with other attributes when identifying an individual review record. The validation does not establish the reason why a `review_id` occurs across multiple records; determining the cause is outside the scope of grain validation.
+
+### 3. Validate `order_id` repetition
+
+The `order_id` repetition check identifies orders associated with multiple review records. Some orders occur three times, while others occur twice.
+
+This confirms that `order_id` does not uniquely identify a row in `staging.order_reviews`.
+
+Therefore, the review table operates at a finer grain than the order-level `orders` table.
+
+### 4. Determine the `review_id` to `order_id` cardinality
+
+The cardinality check shows that some `review_id` values are associated with three distinct `order_id` values.
+
+This establishes that `review_id` does not uniquely identify an order within the review table. A single `review_id` value can occur in records associated with multiple orders.
+
+The reason for this behaviour is not determined during grain validation and is therefore not interpreted as a business rule at this stage.
+
+### 5. Determine the `order_id` to `review_id` cardinality
+
+The reverse cardinality check shows that some `order_id` values are associated with multiple distinct `review_id` values, with some orders having three distinct review identifiers.
+
+This confirms that one order can have multiple review records.
+
+The relationship therefore operates as a one-to-many relationship from the order level to the review-record level.
+
+### 6. Validate the `review_id` and `order_id` combination
+
+The combination of `review_id` and `order_id` is tested to determine whether the same combination occurs more than once.
+
+The result returns no repeated combinations.
+
+This confirms that the combination of `review_id` and `order_id` uniquely identifies the records within `staging.order_reviews`.
+
+While neither `review_id` nor `order_id` is unique independently, their combination provides a unique row-level identifier for the observed review grain.
+
+## Overall Finding - Order Reviews
+
+The grain of `staging.order_reviews` is established at the level of one review record associated with an order.
+
+Neither `review_id` nor `order_id` uniquely identifies a row independently. `order_id` can be associated with multiple review records, while the same `review_id` can occur across records associated with multiple orders. The combination of `review_id` and `order_id` is unique across the staging table and therefore provides the row-level identifier for the observed review grain.
+
+The table contains 99,224 review records associated with 98,673 distinct orders and 98,410 distinct review identifiers. There are five distinct review scores, which function as attributes of the review record.
+
+The established review-level grain is important for subsequent relationship validation and analytical modelling. Because one order can have multiple review records, combining `order_reviews` with other datasets that also contain multiple records per order can result in row multiplication if the relationships are not handled at the appropriate grain.
+
+The validation establishes the structural relationships present in the staging data but does not determine why some `review_id` values are associated with multiple orders. Any investigation into the business meaning or data-quality implications of this behaviour should be handled during later validation.
