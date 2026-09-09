@@ -157,3 +157,60 @@ SELECT
     COUNT(DISTINCT seller_id) AS distinct_sellers,
     COUNT(*) AS total_order_items
 FROM staging.items;
+
+
+-- ORDER PAYMENT GRAIN VALIDATION
+
+-- 1. Establish table and identifier counts for the order_payments table --
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT order_id) AS distinct_order_ids,
+    COUNT(DISTINCT payment_sequential) AS distinct_payment_sequentials,
+    COUNT(DISTINCT payment_type) AS distinct_payment_types,
+    COUNT(DISTINCT payment_installments) AS distinct_payment_installments
+FROM staging.payments;
+
+-- 2. Check the repetition of order_id in the order_payments table
+SELECT
+    order_id,
+    COUNT(*) AS payment_record_count
+FROM staging.payments
+GROUP BY order_id
+HAVING COUNT(*) > 1
+ORDER BY payment_record_count DESC;   
+
+-- 3. Check the payment_sequential uniqueness in the order_payments table
+SELECT
+    payment_sequential,
+    COUNT(*) AS payment_sequential_count
+FROM staging.payments
+GROUP BY payment_sequential
+HAVING COUNT(*) > 1
+ORDER BY payment_sequential_count DESC;   
+
+-- 4. Test the composite order_id and payment_sequential key
+SELECT
+    order_id,
+    payment_sequential,
+    COUNT(*) AS composite_key_count 
+FROM staging.payments
+GROUP BY 
+    order_id, 
+    payment_sequential
+HAVING COUNT(*) > 1
+ORDER BY composite_key_count DESC;
+
+-- 5. Summarise payment-record cardinality per order
+SELECT
+    payment_record_count,
+    COUNT(*) AS order_count
+FROM (
+    SELECT
+        order_id,
+        COUNT(*) AS payment_record_count
+    FROM staging.payments
+    GROUP BY order_id
+) AS order_payment_counts
+GROUP BY payment_record_count
+ORDER BY payment_record_count DESC;
+

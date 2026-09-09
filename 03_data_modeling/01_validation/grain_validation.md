@@ -216,3 +216,84 @@ The grain of `staging.order_items` is established at the level of an individual 
 The table contains 112,650 order-item records associated with 98,666 distinct orders, 32,951 distinct products, and 3,095 distinct sellers. The detailed relationships between order items, products, sellers, and orders will be validated separately during relationship validation.
 
 The confirmed order-item grain provides the basis for treating `order_items` as an item-level transactional component of the analytical model and for ensuring that measures based on order-item records are not incorrectly interpreted as order-level measures.
+
+## Order Payments
+
+The `order_payments` dataset contains payment records associated with orders in the Olist e-commerce system. The main identifiers are `order_id` and `payment_sequential`, while `payment_type`, `payment_installments`, and `payment_value` describe attributes of the payment record. Grain validation focuses on determining whether each row represents one payment record associated with an order and whether `order_id` and `payment_sequential` together uniquely identify that record.
+
+### 1. Establish table and attribute counts for Order Payments Table
+
+The first step is to establish the total number of records and the number of distinct values for the main payment identifiers and attributes.
+
+| Metric | Result |
+| --- | ---: |
+| Total rows | 103,886 |
+| Distinct `order_id` | 99,440 |
+| Distinct `payment_sequential` | 29 |
+| Distinct `payment_type` | 5 |
+| Distinct `payment_installments` | 24 |
+
+The table contains 103,886 payment records associated with 99,440 distinct orders. The difference between these counts indicates that some orders are associated with multiple payment records.
+
+There are 29 distinct `payment_sequential` values, confirming that this field does not function as a globally unique identifier. The table also contains five distinct payment types and 24 distinct installment values.
+
+### 2. Validate `order_id` repetition in Order Payments
+
+The next step is to examine the number of payment records associated with each `order_id`.
+
+The results show that individual orders can contain multiple payment records. The highest observed order is associated with 29 payment records, followed by orders with 26, 22, 21, 19, and fewer payment records.
+
+This confirms that `order_id` does not uniquely identify rows in `staging.order_payments`. Instead, it identifies the order to which one or more payment records belong.
+
+### 3. Validate `payment_sequential` uniqueness
+
+The uniqueness check shows that `payment_sequential` values are repeated throughout the table. The value `1` occurs 99,360 times, while subsequent sequence values occur with progressively lower frequencies.
+
+This confirms that `payment_sequential` is not globally unique. Its behaviour is consistent with a sequence that is meaningful within the context of an individual order rather than an identifier that uniquely identifies a payment record across the entire table.
+
+### 4. Validate the composite `order_id` and `payment_sequential` grain
+
+The combination of `order_id` and `payment_sequential` is tested to determine whether the same combination occurs more than once.
+
+The result returns no repeated combinations.
+
+This confirms that the combination of `order_id` and `payment_sequential` uniquely identifies the payment records within `staging.order_payments`. While neither identifier is unique independently, their combination provides a unique identifier for the row-level payment grain.
+
+### 5. Summarise payment-record cardinality per order
+
+The payment-record distribution provides a compact view of how many payment records are associated with individual orders.
+
+| Payment records per order | Number of orders |
+| ---: | ---: |
+| 29 | 1 |
+| 26 | 1 |
+| 22 | 1 |
+| 21 | 1 |
+| 19 | 2 |
+| 15 | 2 |
+| 14 | 2 |
+| 13 | 3 |
+| 12 | 8 |
+| 11 | 8 |
+| 10 | 5 |
+| 9 | 9 |
+| 8 | 11 |
+| 7 | 28 |
+| 6 | 36 |
+| 5 | 52 |
+
+The distribution confirms that payment records operate at a finer grain than orders, with individual orders associated with varying numbers of payment records.
+
+The difference between the number of distinct orders and the number of records with `payment_sequential = 1` is noted for further business-rule validation. The grain validation establishes the structure of the payment records but does not determine the reason for this difference.
+
+## Overall Finding - Order Payments
+
+The grain of `staging.order_payments` is established at the level of an individual payment record associated with an order.
+
+`order_id` is not unique because an order can have multiple payment records. `payment_sequential` is also not globally unique and is meaningful within the context of an order. The combination of `order_id` and `payment_sequential` is unique across the staging table and therefore provides the row-level identifier for the payment grain.
+
+The table contains 103,886 payment records associated with 99,440 distinct orders. The observed payment-record cardinality demonstrates that payment data operates at a finer grain than order-level data.
+
+This distinction has an important modelling implication. Payment measures such as `payment_value` must be handled carefully when payment records are joined to other datasets containing multiple records per order, as incorrect joins could result in row multiplication and inflated payment totals.
+
+The observed difference between distinct orders and records beginning with `payment_sequential = 1` is retained as a business-rule validation item rather than being resolved during grain validation.
