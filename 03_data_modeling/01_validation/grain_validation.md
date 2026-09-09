@@ -510,3 +510,85 @@ The dataset contains **32,951 products**, **73 distinct non-null product categor
 The `NULL` category values have not been assigned an assumed category because their business meaning has not yet been established. This issue should be revisited during later validation.
 
 The product-level grain will be used during subsequent relationship validation and data modelling to establish how products connect to transactional datasets such as `order_items`.
+
+## Sellers — Grain Validation
+
+The `sellers` dataset contains seller-level information within the Olist e-commerce system. Grain validation was performed to establish what one row represents, determine whether `seller_id` uniquely identifies a seller, and examine how seller geographic attributes behave at the seller and geographic levels.
+
+### 1. Establish table and identifier counts for Sellers Table
+
+The first validation established the total number of records and the distinct counts for the seller identifier and geographic attributes.
+
+| Metric | Result |
+| --- | ---: |
+| Total rows | 3,095 |
+| Distinct `seller_id` | 3,095 |
+| Distinct ZIP-code prefixes | 2,246 |
+| Distinct cities | 591 |
+| Distinct states | 23 |
+
+The table contains 3,095 rows and 3,095 distinct `seller_id` values, indicating that each row corresponds to a distinct seller.
+
+The geographic attributes have fewer distinct values than the total number of sellers, indicating that ZIP-code prefixes, cities, and states are shared across multiple sellers.
+
+The dataset contains 23 distinct seller state codes. This represents the states observed among sellers in the dataset and does not imply that Brazil has only 23 federative units.
+
+### 2. Validate `seller_id` uniqueness
+
+The uniqueness check grouped records by `seller_id` and searched for identifiers occurring more than once.
+
+The query returned no results, confirming that no `seller_id` occurs more than once in the staging table.
+
+Therefore, `seller_id` uniquely identifies each seller record and can serve as the row-level identifier.
+
+### 3. Determine the `seller_id` to geography cardinality
+
+The cardinality check examined whether a seller was associated with multiple distinct values for:
+
+- `seller_zip_code_prefix`
+- `seller_city`
+- `seller_state`
+
+The query returned no results, indicating that no seller was associated with more than one distinct value for any of these geographic attributes.
+
+Therefore, within the staging data, each seller is associated with one ZIP-code prefix, one city, and one state.
+
+This does not mean that these geographic values are unique to individual sellers. The subsequent geographic cardinality checks demonstrate that multiple sellers can share the same geographic values.
+
+### 4. Determine the ZIP-code prefix to `seller_id` cardinality
+
+The reverse cardinality analysis examined the number of distinct sellers associated with each ZIP-code prefix.
+
+The results show that multiple sellers can share the same ZIP-code prefix. For example, the ZIP-code prefix `14940` is associated with 49 distinct sellers.
+
+Therefore, `seller_zip_code_prefix` does not uniquely identify a seller and functions as a geographic attribute rather than a row-level identifier.
+
+### 5. Determine the city to `seller_id` cardinality
+
+The city-level cardinality analysis shows that multiple sellers can operate within the same city.
+
+For example, `sao paulo` is associated with 697 distinct sellers.
+
+This confirms that `seller_city` is a shared geographic attribute rather than a unique seller identifier.
+
+### 6. Determine the state to `seller_id` cardinality
+
+The state-level cardinality analysis shows that multiple sellers can operate within the same state.
+
+For example, the `SP` state code is associated with 1,849 distinct sellers.
+
+This confirms that `seller_state` is a geographic grouping attribute rather than a unique seller identifier.
+
+## Overall Finding
+
+The grain of `staging.sellers` is established at the **seller level**:
+
+> **1 row = 1 seller**
+
+`seller_id` is unique across all 3,095 records and therefore serves as the row-level identifier.
+
+Each seller is associated with one `seller_zip_code_prefix`, one `seller_city`, and one `seller_state` within the staging data. However, these geographic attributes are not unique to individual sellers. Multiple sellers can share the same ZIP-code prefix, city, and state.
+
+The dataset contains **3,095 sellers**, **2,246 distinct ZIP-code prefixes**, **591 distinct cities**, and **23 distinct state codes represented among sellers**.
+
+The established seller-level grain will be used during subsequent relationship validation and data modelling, particularly when examining how sellers connect to order-item records through `seller_id`.

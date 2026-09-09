@@ -374,3 +374,70 @@ SELECT
 FROM staging.products
 GROUP BY product_category_name
 ORDER BY distinct_product_ids DESC;
+
+
+-- SELLER GRAIN VALIDATION
+
+-- 1. Establish table and identifier counts
+SELECT 
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT seller_id) AS distinct_seller_ids,
+    COUNT(DISTINCT seller_zip_code_prefix) AS distinct_zip_codes,
+    COUNT(DISTINCT seller_city) AS distinct_cities,
+    COUNT(DISTINCT seller_state) AS distinct_states
+FROM staging.sellers;
+
+
+-- 2. Check the uniqueness of seller_id
+SELECT 
+    seller_id,
+    COUNT(*) AS occurrence_count
+FROM staging.sellers
+GROUP BY seller_id
+HAVING COUNT(*) > 1
+ORDER BY occurrence_count DESC;
+
+
+-- 3. Determine the cardinality from seller_id to geography
+SELECT 
+    seller_id,
+    COUNT(DISTINCT seller_zip_code_prefix) AS distinct_zip_codes,
+    COUNT(DISTINCT seller_city) AS distinct_cities,
+    COUNT(DISTINCT seller_state) AS distinct_states
+FROM staging.sellers
+GROUP BY seller_id
+HAVING 
+    COUNT(DISTINCT seller_zip_code_prefix) > 1
+    OR COUNT(DISTINCT seller_city) > 1
+    OR COUNT(DISTINCT seller_state) > 1
+ORDER BY 
+    distinct_zip_codes DESC,
+    distinct_cities DESC,
+    distinct_states DESC;
+
+
+-- 4. Determine the cardinality from ZIP code prefix to seller_id
+SELECT 
+    seller_zip_code_prefix,
+    COUNT(DISTINCT seller_id) AS distinct_seller_ids
+FROM staging.sellers
+GROUP BY seller_zip_code_prefix
+ORDER BY distinct_seller_ids DESC;
+
+
+-- 5. Determine the cardinality from city to seller_id
+SELECT 
+    seller_city,
+    COUNT(DISTINCT seller_id) AS distinct_seller_ids
+FROM staging.sellers
+GROUP BY seller_city
+ORDER BY distinct_seller_ids DESC;
+
+
+-- 6. Determine the cardinality from state to seller_id
+SELECT 
+    seller_state,
+    COUNT(DISTINCT seller_id) AS distinct_seller_ids
+FROM staging.sellers
+GROUP BY seller_state
+ORDER BY distinct_seller_ids DESC;
