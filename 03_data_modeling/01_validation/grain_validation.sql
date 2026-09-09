@@ -317,3 +317,60 @@ GROUP BY
     order_id
 HAVING COUNT(*) > 1
 ORDER BY composite_key_count DESC;
+
+
+-- PRODUCT GRAIN VALIDATION
+
+-- 1. Establish table and identifier counts
+SELECT 
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT product_id) AS distinct_product_ids,
+    COUNT(DISTINCT product_category_name) AS distinct_product_categories
+FROM staging.products;
+
+
+-- 2. Check the uniqueness of product_id
+SELECT 
+    product_id,
+    COUNT(*) AS occurrence_count
+FROM staging.products
+GROUP BY product_id
+HAVING COUNT(*) > 1
+ORDER BY occurrence_count DESC;
+
+
+-- 3. Check whether repeated product IDs have identical or differing records
+SELECT 
+    product_id,
+    COUNT(*) AS record_count,
+    COUNT(DISTINCT product_category_name) AS distinct_categories,
+    COUNT(DISTINCT product_name_lenght) AS distinct_name_lengths,
+    COUNT(DISTINCT product_description_lenght) AS distinct_description_lengths,
+    COUNT(DISTINCT product_photos_qty) AS distinct_photo_counts,
+    COUNT(DISTINCT product_weight_g) AS distinct_weights,
+    COUNT(DISTINCT product_length_cm) AS distinct_lengths,
+    COUNT(DISTINCT product_height_cm) AS distinct_heights,
+    COUNT(DISTINCT product_width_cm) AS distinct_widths
+FROM staging.products
+GROUP BY product_id
+HAVING COUNT(*) > 1
+ORDER BY record_count DESC;
+
+
+-- 4. Determine the cardinality from product_id to product_category_name
+SELECT 
+    product_id,
+    COUNT(DISTINCT product_category_name) AS distinct_product_categories
+FROM staging.products
+GROUP BY product_id
+HAVING COUNT(DISTINCT product_category_name) > 1
+ORDER BY distinct_product_categories DESC;
+
+
+-- 5. Determine the cardinality from product_category_name to product_id
+SELECT 
+    product_category_name,
+    COUNT(DISTINCT product_id) AS distinct_product_ids
+FROM staging.products
+GROUP BY product_category_name
+ORDER BY distinct_product_ids DESC;

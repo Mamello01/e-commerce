@@ -434,3 +434,79 @@ The table contains 99,224 review records associated with 98,673 distinct orders 
 The established review-level grain is important for subsequent relationship validation and analytical modelling. Because one order can have multiple review records, combining `order_reviews` with other datasets that also contain multiple records per order can result in row multiplication if the relationships are not handled at the appropriate grain.
 
 The validation establishes the structural relationships present in the staging data but does not determine why some `review_id` values are associated with multiple orders. Any investigation into the business meaning or data-quality implications of this behaviour should be handled during later validation.
+
+## Products — Grain Validation
+
+The `products` dataset contains product-level information within the Olist e-commerce system. Grain validation was performed to establish what one row represents, determine whether `product_id` uniquely identifies a product, and examine the relationship between products and product categories.
+
+### 1. Establish table and identifier counts for  Products
+
+The first validation established the total number of records and the distinct counts for the primary product identifier and product category.
+
+| Metric | Result |
+| --- | ---: |
+| Total rows | 32,951 |
+| Distinct `product_id` | 32,951 |
+| Distinct `product_category_name` | 73 |
+
+The table contains 32,951 rows and 32,951 distinct `product_id` values. The matching counts indicate that each row corresponds to a distinct product.
+
+There are 73 distinct non-null product category values. A separate category-level analysis identified 610 products with a `NULL` `product_category_name`.
+
+### 2. Validate `product_id` uniqueness
+
+The uniqueness check grouped records by `product_id` and searched for identifiers occurring more than once.
+
+The query returned no results, confirming that no `product_id` occurs more than once in the staging table.
+
+Therefore, `product_id` uniquely identifies each product record and can serve as the row-level identifier.
+
+### 3. Investigate repeated product IDs
+
+A further validation was designed to examine whether repeated `product_id` values represented identical or differing product attributes.
+
+The query returned no results because no repeated `product_id` values were identified.
+
+As a result, there are no repeated product records requiring further attribute-level comparison at the grain-validation stage.
+
+### 4. Determine the `product_id` to `product_category_name` cardinality
+
+The cardinality check examined whether a single product was associated with multiple distinct product categories.
+
+The query returned no results, indicating that no product was associated with more than one distinct category value.
+
+Therefore, each product maps to at most one `product_category_name` within the staging data.
+
+This does not mean that every product has a category. Products with missing category information remain represented by `NULL` values.
+
+### 5. Determine the `product_category_name` to `product_id` cardinality
+
+The reverse cardinality analysis examined the number of distinct products associated with each product category.
+
+The results show that product categories can contain multiple products. For example, the category `cama_mesa_banho` is associated with 3,029 distinct products.
+
+A `NULL` category value is also associated with 610 products.
+
+The `NULL` category values were retained rather than arbitrarily assigned to a category because the appropriate business interpretation of the missing category information has not yet been established. This can be investigated during subsequent data-quality or business-rule validation.
+
+### Overall Finding - Products
+
+The grain of `staging.products` is established at the **product level**:
+
+> **1 row = 1 product**
+
+`product_id` is unique across the staging table and therefore serves as the row-level identifier.
+
+The established relationship between products and categories is:
+
+> **One product → at most one product category**
+
+while the reverse relationship is:
+
+> **One product category → many products**
+
+The dataset contains **32,951 products**, **73 distinct non-null product categories**, and **610 products with a `NULL` category value**.
+
+The `NULL` category values have not been assigned an assumed category because their business meaning has not yet been established. This issue should be revisited during later validation.
+
+The product-level grain will be used during subsequent relationship validation and data modelling to establish how products connect to transactional datasets such as `order_items`.
