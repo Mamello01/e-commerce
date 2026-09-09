@@ -297,3 +297,67 @@ The table contains 103,886 payment records associated with 99,440 distinct order
 This distinction has an important modelling implication. Payment measures such as `payment_value` must be handled carefully when payment records are joined to other datasets containing multiple records per order, as incorrect joins could result in row multiplication and inflated payment totals.
 
 The observed difference between distinct orders and records beginning with `payment_sequential = 1` is retained as a business-rule validation item rather than being resolved during grain validation.
+
+## Orders
+
+The `orders` dataset contains order-level records within the Olist e-commerce system. The primary identifiers examined are `order_id` and `customer_id`, while `order_status` represents an attribute of the order. Grain validation focuses on determining whether each row represents one order and establishing the relationship between orders and customers.
+
+### 1. Establish table and identifier counts for Orders
+
+The first step is to establish the total number of records and the distinct counts for the main order identifiers and attributes.
+
+| Metric | Result |
+| --- | ---: |
+| Total rows | 99,441 |
+| Distinct `order_id` | 99,441 |
+| Distinct `customer_id` | 99,441 |
+| Distinct order statuses | 8 |
+
+The number of rows is equal to the number of distinct `order_id` values, indicating that each row contains a distinct order identifier. The number of distinct `customer_id` values also equals the number of rows, indicating that each customer identifier occurs once within the table.
+
+The relationship between the two identifiers is examined separately to establish the order-to-customer cardinality.
+
+### 2. Validate `order_id` uniqueness
+
+The uniqueness check returns no records with repeated `order_id` values.
+
+This confirms that `order_id` uniquely identifies records within `staging.orders`. Therefore, the table operates at an order-level grain, with each row representing one order.
+
+### 3. Validate the `order_id` to `customer_id` relationship
+
+The cardinality check returns no records where an `order_id` is associated with more than one distinct `customer_id`.
+
+This establishes that each order is associated with one customer identifier within the `orders` table.
+
+### 4. Validate the `customer_id` to `order_id` relationship
+
+The reverse cardinality check shows that each `customer_id` is associated with one distinct `order_id` within `staging.orders`.
+
+This establishes a one-to-one relationship between `customer_id` and `order_id` within this table. This finding should be interpreted at the identifier level represented by `customer_id` and should not be generalised to the broader customer identity represented elsewhere in the customer data.
+
+### 5. Establish order-status cardinality
+
+The order-status distribution identifies eight distinct statuses within the order-level table.
+
+| Order status | Number of orders |
+| --- | ---: |
+| delivered | 96,478 |
+| shipped | 1,107 |
+| canceled | 625 |
+| unavailable | 609 |
+| invoiced | 314 |
+| processing | 301 |
+| created | 5 |
+| approved | 2 |
+
+The status distribution confirms that `order_status` functions as an attribute of the order-level record. The distribution itself does not establish whether the statuses are consistent with the associated order timestamps; such chronological and business-rule checks are reserved for later validation.
+
+## Overall Finding
+
+The grain of `staging.orders` is established at the level of one order per row.
+
+`order_id` is unique across all 99,441 records and therefore serves as the row-level identifier for the table. Each `order_id` is associated with one `customer_id`, while each `customer_id` is associated with one `order_id` within this table.
+
+The table contains eight distinct order statuses, with `delivered` representing the largest observed category at 96,478 orders.
+
+The validated order-level grain provides an important reference point for the other transactional datasets. `order_items` and `order_payments` operate at finer grains and can contain multiple records associated with a single order. This distinction must be considered during subsequent relationship validation and analytical modelling to prevent incorrect joins and potential measure duplication.

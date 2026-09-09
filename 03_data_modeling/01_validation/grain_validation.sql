@@ -214,3 +214,49 @@ FROM (
 GROUP BY payment_record_count
 ORDER BY payment_record_count DESC;
 
+
+-- ORDER GRAIN VALIDATION
+
+-- 1. Establish table and identifier counts for the orders table --
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT order_id) AS distinct_order_ids,
+    COUNT(DISTINCT customer_id) AS distinct_customer_ids,
+    COUNT(DISTINCT order_status) AS distinct_order_statuses
+FROM staging.orders;
+
+-- 2. Check the uniqueness of order_id in the orders table
+SELECT
+    order_id,
+    COUNT(*) AS order_id_occurrences
+FROM staging.orders
+GROUP BY order_id
+HAVING COUNT(*) > 1
+ORDER BY order_id_occurrences DESC;
+
+-- 3. Examine the cardinality of order_id to customer_id
+SELECT
+    order_id,
+    COUNT(DISTINCT customer_id) AS distinct_customer_ids
+FROM staging.orders
+GROUP BY order_id
+HAVING COUNT(DISTINCT customer_id) > 1
+ORDER BY distinct_customer_ids DESC;
+
+-- 4. Examine the cardinality of customer_id to order_id
+SELECT
+    customer_id,
+    COUNT(DISTINCT order_id) AS distinct_order_ids
+FROM staging.orders
+GROUP BY customer_id
+ORDER BY distinct_order_ids DESC;
+
+-- 5. Establish order-status cardinality
+SELECT
+    order_status,
+    COUNT(*) AS number_of_orders
+FROM staging.orders
+GROUP BY order_status
+ORDER BY number_of_orders DESC;
+
+ 
